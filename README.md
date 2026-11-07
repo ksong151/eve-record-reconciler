@@ -63,36 +63,30 @@ you approve.
 
 ## Model connection
 
-`agent/agent.ts` picks the model when eve compiles the agent:
-
-| `RECONCILER_MODEL` | Model                                 | Credentials                                         |
-| ------------------ | ------------------------------------- | --------------------------------------------------- |
-| unset (default)    | `chatgpt()`, a ChatGPT subscription   | `/login` in `npm run dev`; nothing in project files |
-| a Gateway model ID | that model through Vercel AI Gateway  | your own `AI_GATEWAY_API_KEY` or `eve link` OIDC    |
+`agent/agent.ts` uses `chatgpt()`, a ChatGPT subscription. The repository
+holds no model credentials and no env file. Model connections are handled by
+eve itself.
 
 **ChatGPT (default).** Run `npm run dev`, type `/login`, and choose
 **ChatGPT Subscription**. No API key is needed. `chatgpt()` is local-only and
 can't be deployed.
 
-**AI Gateway (optional, for maintainers).** Export the model ID in the shell
-that runs eve, and provide a Gateway credential the way eve documents it:
+**Vercel AI Gateway (optional, for maintainers).** Use eve's own commands:
 
-```bash
-export RECONCILER_MODEL=openai/gpt-6-luna-fast
-npm run dev
-```
+1. Run `npm run dev`, type `/login`, and choose **Vercel Account** or
+   **Vercel AI Gateway API Key**.
+2. Pick a Gateway model with `/model` in the dev UI, or run
+   `eve set model <gateway-model-id>` (for example `openai/gpt-6-luna-fast`).
+   Either one edits `agent/agent.ts`. If eve can't rewrite the `chatgpt()`
+   line, set `model` to the Gateway model ID by hand.
+3. Treat that `agent/agent.ts` edit as a local change; it doesn't need to be
+   committed.
 
-eve reads `AI_GATEWAY_API_KEY` from the environment. `eve link` instead pulls
-a project credential into `.env.local`. All `.env*` files are git-ignored, and
-the repository ships no env file, so no key or placeholder is committed.
-Compiling a Gateway model also fetches model metadata from
-`ai-gateway.vercel.sh`, so that host must be reachable.
-
-The Gateway path was not run while building this project. A compile with
-`RECONCILER_MODEL` set was checked: it selected the Gateway model, then
-stopped because the metadata host was blocked in the build environment. See
-`node_modules/eve/docs/agent-config.md` and
-`node_modules/eve/docs/guides/dev-tui.md` for current credential options.
+eve saves keys and login tokens in the OS secret store, never in project
+files. It records the chosen connection, which isn't secret, in
+`.eve/provider.json`, and `.eve/` is git-ignored. The Gateway route was not
+run while building this project. See `node_modules/eve/docs/guides/dev-tui.md`
+and `node_modules/eve/docs/agent-config.md` for the current options.
 
 ## Setup and checks
 
@@ -123,14 +117,18 @@ data, so they need a model connection:
 npm run eval
 ```
 
-With the default ChatGPT model, sign in through `npm run dev` and `/login`
-first. With AI Gateway, set `RECONCILER_MODEL` and a Gateway credential as
-above.
+Sign in first through `npm run dev` and `/login`, with whichever connection
+[Model connection](#model-connection) describes.
 
-Two of the evals also have soft LLM-judge checks. They run only when
-`RECONCILER_MODEL` is set, because eve's default judge model,
-`typesafe-ai/jev`, goes through AI Gateway. Use `npm run eval -- --strict` to
-make a judge score below 0.7 fail the run.
+Two of the evals also have soft LLM-judge checks. They are off by default,
+because eve's default judge model, `typesafe-ai/jev`, goes through AI Gateway
+whichever model the agent uses. With Gateway access, turn them on:
+
+```bash
+RECONCILER_EVAL_JUDGE=1 npm run eval -- --strict
+```
+
+`--strict` makes a judge score below 0.7 fail the run.
 
 Status: the evals have not run against a real model. Their wiring was checked
 once with a temporary scripted stand-in model (not included here), with the
@@ -376,7 +374,7 @@ preview id. Existing files are never overwritten.
 
 ```text
 agent/
-├── agent.ts                  # Model (chatgpt() or RECONCILER_MODEL), defaultTools: false
+├── agent.ts                  # Model (chatgpt()), defaultTools: false
 ├── instructions.md           # System prompt: workflow and ground rules
 ├── lib/                      # Deterministic code; no model calls
 │   ├── csv.ts                # CSV reader and writer

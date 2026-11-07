@@ -5,10 +5,11 @@ export const LOAD_DEMO =
 
 /**
  * Judge assertions use eve's default judge model, which runs through AI
- * Gateway. Only grade with the judge when the agent is configured for
- * Gateway, so a ChatGPT-only run still completes its deterministic checks.
+ * Gateway whatever model the agent uses. They run only when
+ * RECONCILER_EVAL_JUDGE=1, so a run without Gateway access still completes
+ * its deterministic checks.
  */
-export const judgeAvailable = Boolean(process.env.RECONCILER_MODEL?.trim());
+export const judgeAvailable = process.env.RECONCILER_EVAL_JUDGE === "1";
 
 type Session = EveEvalTurn["session"];
 
