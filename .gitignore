@@ -1,0 +1,20 @@
+# Dependencies
+node_modules
+
+# Environment files and credentials (eve stores model logins in the OS secret store, not here)
+.env*
+
+# eve local state, build output, and framework caches
+.eve
+.vercel
+.next
+.output
+.nitro
+dist
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+
+# Reconciliation exports (merged CSVs and audit reports)
+output/

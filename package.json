@@ -1,0 +1,32 @@
+{
+  "name": "eve-record-reconciler",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Open-source eve agent that reconciles two overlapping CSV exports, with deterministic matching and guided conflict review.",
+  "license": "MIT",
+  "type": "module",
+  "imports": {
+    "#*": "./agent/*",
+    "#evals/*": "./evals/*"
+  },
+  "scripts": {
+    "build": "eve build",
+    "dev": "eve dev --no-default-extensions",
+    "eval": "eve eval",
+    "start": "eve start",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "ai": "^7.0.137",
+    "eve": "1.0.0-rc.6",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.x",
+    "typescript": "7.0.2"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}
