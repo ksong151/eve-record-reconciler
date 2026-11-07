@@ -43,6 +43,10 @@ export async function resolveInputCsv(p: string, cwd: string = process.cwd()): P
   } catch {
     throw new Error(`${p}: file not found.`);
   }
+  // A symlink named *.csv may point anywhere; the file it resolves to must be a .csv too.
+  if (path.extname(real).toLowerCase() !== ".csv") {
+    throw new Error(`${p}: resolves to ${real}, which is not a .csv file.`);
+  }
   const info = await stat(real);
   if (!info.isFile()) throw new Error(`${p}: not a regular file.`);
   if (info.size > MAX_INPUT_BYTES) {
