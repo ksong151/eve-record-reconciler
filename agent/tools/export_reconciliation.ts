@@ -14,7 +14,7 @@ export default defineTool({
   inputSchema: z.object({
     previewId: z.string(),
     unresolvedPolicy: z.enum(["block", "flag_for_review"]),
-    outputDir: z.string().optional().describe("Directory for the output files (default: output)."),
+    outputDir: z.string().min(1).optional().describe("Directory for the output files (default: output)."),
     expectedMemberRows: z.number().int().min(0).describe("counts.outputMemberRows from the preview."),
     expectedOpenItems: z.number().int().min(0).describe("Length of openItemIds from the preview."),
   }),
