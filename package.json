@@ -11,9 +11,10 @@
   },
   "scripts": {
     "build": "eve build",
-    "dev": "eve dev",
+    "dev": "eve dev --no-default-extensions",
     "eval": "eve eval",
     "start": "eve start",
+    "test": "node --test \"test/**/*.test.ts\"",
     "typecheck": "tsc"
   },
   "dependencies": {

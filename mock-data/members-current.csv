@@ -1,0 +1,18 @@
+member_id,first_name,last_name,email,mobile_phone,work_phone,grad_year,status
+C-2001,Morgan,Ellis,morgan.ellis@example.com,312.555.0101,,2012,active
+C-2002,Priya,Nakamura,priya.nakamura@example.com,+1 617 555 0102,(617) 555-0190,,active
+C-2003,Tobi,Okonkwo,tobi.okonkwo@example.com,(404) 555-0103,,2010,lapsed
+C-2004,Lucia,Garcia,lucia.garcia@example.com,305-555-0104,,2018,active
+C-2005,Casey,Brennan,casey.brennan@example.com,415-555-0105,(415) 555-0191,2001,active
+C-2006,Jordan,Lee,jordan.lee@example.com,206-555-0110,,2016,active
+C-2007,Jordan,Lee,jlee.alumni@example.com,(503) 555-0111,,2004,lapsed
+C-2008,Rami,Haddad,rami.haddad@example.com,773-555-0121,,2013,active
+C-2009,Samantha,Rivera,samantha.rivera@example.com,708-555-0140,,2014,active
+C-2010,Avery,Quinn,avery.quinn@example.com,608-555-0150,,2017,active
+C-2011,Dan,Whitfield,dan.whitfield@example.com,919-555-0130,,2009,lapsed
+C-2012,Daniel,Whitfield,dan.whitfield@example.com,(919) 555-0130,,2009,active
+C-2013,Ade,Bello,ade.bello@example.com,404-555-0170,,2021,active
+C-2014,Ivy,Kowalski,ivy.kowalski@example.com,612-555-0107,,2019,active
+C-2015,Kofi,Mensah,kofi.mensah@example.com,301-555-0108,,2008,active
+C-2016,Elena,Duarte,elena.duarte@example.com,720-555-0109,,2016,lapsed
+C-2017,Hyun,Park,hyun.park@example.com,503-555-0112,,2020,active
