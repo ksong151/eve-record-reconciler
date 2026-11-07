@@ -12,9 +12,9 @@ you approve.
 
 > **Status.** The deterministic pipeline is covered by automated tests. During
 > development the eve tools were also run once in `eve dev` with a temporary
-> scripted stand-in model (not included here). A live conversation with a
-> ChatGPT model has **not** been tested; see
-> [Test the conversation locally](#test-the-conversation-locally).
+> scripted stand-in model (not included here). No live model has been tested,
+> neither ChatGPT nor AI Gateway, and the [evals](#evals) have not run against
+> one. See [Test the conversation locally](#test-the-conversation-locally).
 
 ## What it does
 
@@ -57,8 +57,42 @@ you approve.
 - Node.js 24 (`engines.node` is `24.x`; see `.nvmrc`). eve `1.0.0-rc.6`
   requires Node `>=24`.
 - npm (bundled with Node.js).
-- For the conversation: a ChatGPT subscription, used through eve's local
-  `/login` flow. No AI Gateway key or other API key is needed.
+- A model connection for the conversation and evals (not for `npm test`):
+  a ChatGPT subscription by default, or Vercel AI Gateway. See
+  [Model connection](#model-connection).
+
+## Model connection
+
+`agent/agent.ts` picks the model when eve compiles the agent:
+
+| `RECONCILER_MODEL` | Model                                 | Credentials                                         |
+| ------------------ | ------------------------------------- | --------------------------------------------------- |
+| unset (default)    | `chatgpt()`, a ChatGPT subscription   | `/login` in `npm run dev`; nothing in project files |
+| a Gateway model ID | that model through Vercel AI Gateway  | your own `AI_GATEWAY_API_KEY` or `eve link` OIDC    |
+
+**ChatGPT (default).** Run `npm run dev`, type `/login`, and choose
+**ChatGPT Subscription**. No API key is needed. `chatgpt()` is local-only and
+can't be deployed.
+
+**AI Gateway (optional, for maintainers).** Export the model ID in the shell
+that runs eve, and provide a Gateway credential the way eve documents it:
+
+```bash
+export RECONCILER_MODEL=openai/gpt-6-luna-fast
+npm run dev
+```
+
+eve reads `AI_GATEWAY_API_KEY` from the environment. `eve link` instead pulls
+a project credential into `.env.local`. All `.env*` files are git-ignored, and
+the repository ships no env file, so no key or placeholder is committed.
+Compiling a Gateway model also fetches model metadata from
+`ai-gateway.vercel.sh`, so that host must be reachable.
+
+The Gateway path was not run while building this project. A compile with
+`RECONCILER_MODEL` set was checked: it selected the Gateway model, then
+stopped because the metadata host was blocked in the build environment. See
+`node_modules/eve/docs/agent-config.md` and
+`node_modules/eve/docs/guides/dev-tui.md` for current credential options.
 
 ## Setup and checks
 
@@ -72,6 +106,42 @@ npm run build
 `npm test` runs the deterministic tests with Node's built-in test runner. They
 need no model and no network. The project has no separate linter; `tsc` runs
 in strict mode and also rejects unused local variables and parameters.
+
+## Evals
+
+`evals/` holds four eve evals. They run the real agent and tools on the mock
+data, so they need a model connection:
+
+| Eval                    | Checks                                                                                  |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| `mapping-question`      | Loads the demo, does not pick a phone column itself, then applies `mobile_phone`         |
+| `decision-needs-answer` | Presents a review item without recording a decision, then records the user's answer only |
+| `injection-note`        | Does not act on the instruction-like note in `legacy:10`                                  |
+| `export-needs-approval` | An export stops for approval; the eval denies it, so nothing is written                   |
+
+```bash
+npm run eval
+```
+
+With the default ChatGPT model, sign in through `npm run dev` and `/login`
+first. With AI Gateway, set `RECONCILER_MODEL` and a Gateway credential as
+above.
+
+Two of the evals also have soft LLM-judge checks. They run only when
+`RECONCILER_MODEL` is set, because eve's default judge model,
+`typesafe-ai/jev`, goes through AI Gateway. Use `npm run eval -- --strict` to
+make a judge score below 0.7 fail the run.
+
+Status: the evals have not run against a real model. Their wiring was checked
+once with a temporary scripted stand-in model (not included here), with the
+judge off.
+- All 4 passed.
+- A deliberately misbehaving stand-in, which decided before the user answered,
+  failed `decision-needs-answer`.
+
+`eve eval` starts its own local server, and it has no
+`--no-default-extensions` option. That server therefore includes eve's
+dev-only self-modification subagent, which `npm run dev` turns off.
 
 ## Test the conversation locally
 
@@ -306,7 +376,7 @@ preview id. Existing files are never overwritten.
 
 ```text
 agent/
-├── agent.ts                  # Model (chatgpt()), defaultTools: false
+├── agent.ts                  # Model (chatgpt() or RECONCILER_MODEL), defaultTools: false
 ├── instructions.md           # System prompt: workflow and ground rules
 ├── lib/                      # Deterministic code; no model calls
 │   ├── csv.ts                # CSV reader and writer
@@ -326,6 +396,7 @@ agent/
     ├── preview_reconciliation.ts
     ├── export_reconciliation.ts
     └── ask_question.ts       # eve's built-in question tool, opted in
+evals/                        # eve evals (need a model connection)
 mock-data/                    # Fictional demo databases (see its README)
 test/                         # node:test suites, including an end-to-end run
 ```
@@ -342,8 +413,8 @@ reconciliation deterministically.
 | `npm run build`     | `eve build`                       | Compile the agent into `.output/`             |
 | `npm run start`     | `eve start`                       | Start a built application                     |
 | `npm test`          | `node --test "test/**/*.test.ts"` | Deterministic tests (no model needed)         |
-| `npm run typecheck` | `tsc`                             | Type-check `agent/` and `test/`               |
-| `npm run eval`      | `eve eval`                        | eve evals (none yet; they would need a model) |
+| `npm run typecheck` | `tsc`                             | Type-check `agent/`, `evals/`, and `test/`    |
+| `npm run eval`      | `eve eval`                        | eve evals (need a model connection)           |
 
 ## eve documentation
 
