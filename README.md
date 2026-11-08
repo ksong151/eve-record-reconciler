@@ -11,9 +11,9 @@ your explicit answers, and shows a dry-run preview. It writes output only after
 you approve.
 
 > **Status.** The deterministic pipeline is covered by automated tests. On
-> 2026-11-08, the four [evals](#evals) ran against a live model through a
+> 2026-11-08, the six [evals](#evals) ran against a live model through a
 > ChatGPT login (eve `1.0.0-rc.6`, judge checks off): `npm run eval -- --repeat 4`
-> passed 16 of 16, every eval 4/4. The AI Gateway route has not been run, and the
+> passed 24 of 24, every eval 4/4. The AI Gateway route has not been run, and the
 > hand-driven walkthrough in [Test the conversation locally](#test-the-conversation-locally)
 > has not been recorded here.
 
@@ -104,7 +104,7 @@ in strict mode and also rejects unused local variables and parameters.
 
 ## Evals
 
-`evals/` holds four eve evals. They run the real agent and tools on the mock
+`evals/` holds six eve evals. They run the real agent and tools on the mock
 data, so they need a model connection:
 
 | Eval                    | Checks                                                                                  |
@@ -113,6 +113,14 @@ data, so they need a model connection:
 | `decision-needs-answer` | Presents a review item without recording a decision, then records the user's answer only |
 | `injection-note`        | Does not act on the instruction-like note in `legacy:10`                                  |
 | `export-needs-approval` | An export stops for approval; the eval denies it, so nothing is written                   |
+| `full-review-export`    | Records the user's answers to all 9 review items, then exports the approved result        |
+| `export-open-items`     | With items open, does not export or pick `flag_for_review` itself, but offers it; exports flagged rows once chosen |
+
+The last two approve an export and check the files written. The full review
+must produce 17 rows with the chosen values, 9 decisions in the report, and
+unchanged inputs. The open-items export must produce 21 rows, with
+conflicting fields blank and flagged. Each run writes to its own
+`output/eval-*` folder and deletes it afterwards.
 
 ```bash
 npm run eval
@@ -132,20 +140,37 @@ RECONCILER_EVAL_JUDGE=1 npm run eval -- --strict
 `--strict` makes a judge score below 0.7 fail the run.
 
 Status: on 2026-11-08, with a ChatGPT login and the judge off,
-`npm run eval -- --repeat 4` passed 16 of 16 (every eval 4/4). Earlier live
-runs had failed on turn boundaries, not behavior: the model sometimes ends a
-turn by asking the user through `ask_question`, which parks the run, and the
-evals expected a text reply. `evals/shared.ts` now accepts either ending. A
-run that ends waiting on an approval or sign-in still fails, and the
-behavioral gates are unchanged. The judge-graded checks have not run.
+`npm run eval -- --repeat 4` passed 24 of 24 (every eval 4/4) at commit
+`b977312`. The judge-graded checks have not run.
+
+Earlier live runs failed for two kinds of reasons.
+
+The first kind was eval mistakes, fixed in the evals:
+
+- The evals expected a text reply. The model sometimes ends a turn by asking
+  the user through `ask_question`, which parks the run. `evals/shared.ts` now
+  accepts either ending. A run that ends waiting on an approval or sign-in
+  still fails.
+- The flag_for_review check read the question text but not its option
+  buttons. It now reads everything the user sees.
+
+The second kind was real agent behavior. The fix is in
+`agent/instructions.md`, and the evals did not change:
+
+- The agent sometimes refused a clear answer because it named a different
+  item than the one asked about.
+- When asked to export with items open, it sometimes did not mention
+  `flag_for_review`.
 
 Limits of the evals:
 
 - `decision-needs-answer` accepts a `get_review_queue` call anywhere in the
   run.
-- `export-needs-approval` sends its confirmation up to twice.
-- No deterministic gate checks what the agent says in a question; only the
-  judge checks would.
+- The three export evals send their export confirmation up to twice.
+- `full-review-export` gives every answer explicitly, naming the records, so it
+  does not test vague answers.
+- Apart from `export-open-items` checking that the flag option is offered, no
+  deterministic gate checks what the agent says; only the judge checks would.
 
 `eve eval` starts its own local server, and it has no
 `--no-default-extensions` option. That server therefore includes eve's
