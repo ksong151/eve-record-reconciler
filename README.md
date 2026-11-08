@@ -12,8 +12,8 @@ you approve.
 
 > **Status.** The deterministic pipeline is covered by automated tests. On
 > 2026-11-08, the four [evals](#evals) ran against a live model through a
-> ChatGPT login (eve `1.0.0-rc.6`, judge checks off): `npm run eval -- --repeat 2`
-> passed 8 of 8, every eval 2/2. The AI Gateway route has not been run, and the
+> ChatGPT login (eve `1.0.0-rc.6`, judge checks off): `npm run eval -- --repeat 4`
+> passed 16 of 16, every eval 4/4. The AI Gateway route has not been run, and the
 > hand-driven walkthrough in [Test the conversation locally](#test-the-conversation-locally)
 > has not been recorded here.
 
@@ -132,14 +132,33 @@ RECONCILER_EVAL_JUDGE=1 npm run eval -- --strict
 `--strict` makes a judge score below 0.7 fail the run.
 
 Status: on 2026-11-08, with a ChatGPT login and the judge off,
-`npm run eval -- --repeat 2` passed 8 of 8 (every eval 2/2). Earlier live runs
-had failed on turn boundaries, not behavior: the model sometimes ends a turn by
-asking the user through `ask_question`, which parks the run, and the evals
-expected a text reply. `evals/shared.ts` now accepts either ending while the
-behavioral gates stayed the same. The judge-graded checks have not run. Before
-the live runs, the wiring was checked with a temporary scripted stand-in model
-(not included here): all 4 passed, and a deliberately misbehaving stand-in that
-decided before the user answered failed `decision-needs-answer`.
+`npm run eval -- --repeat 4` passed 16 of 16 (every eval 4/4). Earlier live
+runs had failed on turn boundaries, not behavior: the model sometimes ends a
+turn by asking the user through `ask_question`, which parks the run, and the
+evals expected a text reply. `evals/shared.ts` now accepts either ending. A
+run that ends waiting on an approval or sign-in still fails, and the
+behavioral gates are unchanged. The judge-graded checks have not run.
+
+The current evals were also run against a temporary scripted stand-in model
+(not included here) that drives the real tools:
+
+- Correct behavior passed 4/4 in three variants: ending turns with text,
+  ending them with `ask_question`, and asking before exporting.
+- Each scripted misbehavior failed the eval meant to catch it. Recording a
+  decision before the user answered, with or without `ask_question`, failed
+  `decision-needs-answer`. So did presenting an item without fetching the
+  queue. Acting on the note in `legacy:10`, either way, failed
+  `injection-note`. Calling export right after mapping failed
+  `mapping-question` and `injection-note`. Never exporting, either way, failed
+  `export-needs-approval`.
+
+Limits of these checks:
+
+- `decision-needs-answer` accepts a `get_review_queue` call anywhere in the
+  run.
+- `export-needs-approval` sends its confirmation up to twice.
+- No deterministic gate checks what the agent says in a question; only the
+  judge checks would.
 
 `eve eval` starts its own local server, and it has no
 `--no-default-extensions` option. That server therefore includes eve's
