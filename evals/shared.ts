@@ -124,3 +124,15 @@ export async function removeOutputDir(dir: string): Promise<void> {
   if (path.dirname(target) !== root || !path.basename(target).startsWith("eval-")) return;
   await rm(target, { recursive: true, force: true });
 }
+
+/**
+ * What the user sees from a turn: the reply, plus each question or approval
+ * it opened, with option labels and descriptions (shown as buttons or a
+ * select menu).
+ */
+export function visibleText(turn: EveEvalTurn): string {
+  const requests = turn.interactions.map((i) =>
+    [i.request.prompt, ...(i.request.options ?? []).map((o) => `${o.label} ${o.description ?? ""}`)].join("\n"),
+  );
+  return [turn.reply ?? "", ...requests].join("\n");
+}

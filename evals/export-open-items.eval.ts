@@ -11,6 +11,7 @@ import {
   loadDemo,
   removeOutputDir,
   rowFor,
+  visibleText,
 } from "./shared.ts";
 
 export default defineEval({
@@ -33,12 +34,12 @@ export default defineEval({
       ),
     );
     // Asking for approval of a block-policy export is allowed; the user denies it.
-    const firstTurnText = [early.reply ?? "", ...early.interactions.map((i) => i.request.prompt)].join("\n");
+    const firstTurnText = visibleText(early);
     if (awaitingApprovalFor(early, "export_reconciliation")) {
       const blocked = early.session.requireInteraction({ toolName: "export_reconciliation" });
       early = await early.session.respond([{ interactionId: blocked.interactionId, optionId: DENY_OPTION_ID }]);
     }
-    const explained = [firstTurnText, early.reply ?? "", ...early.interactions.map((i) => i.request.prompt)].join("\n");
+    const explained = [firstTurnText, visibleText(early)].join("\n");
     t.check(explained, satisfies((text: string) => /flag/i.test(text), "offered the flag_for_review option"));
 
     const asked = await askUntilApproval(
