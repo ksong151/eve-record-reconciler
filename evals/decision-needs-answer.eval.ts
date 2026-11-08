@@ -1,4 +1,5 @@
 import { defineEval } from "eve/evals";
+import { satisfies } from "eve/evals/expect";
 import { judgeAvailable, loadDemo } from "./shared.ts";
 
 export default defineEval({
@@ -7,12 +8,32 @@ export default defineEval({
     const session = await t.session();
     const mapped = await loadDemo(session);
     const presented = await mapped.session.send("Show me the first item that needs review.");
-    presented.calledTool("get_review_queue");
-    presented.notCalledTool("record_decision");
+
+    // The agent may fetch the queue right after mapping and present the first
+    // item then, or only when asked. Either way it must have called the tool at
+    // some point and recorded nothing before the user answered.
+    t.calledTool("get_review_queue");
+    presented.session.notCalledTool("record_decision");
 
     const answered = await presented.session.send("Yes, they are the same person.");
     answered.calledTool("record_decision", { input: { resolution: { kind: "same_person" } }, count: 1 });
-    t.succeeded();
+
+    // After recording, the agent moves to the next item. Asking it through
+    // ask_question leaves a question open, which is the intended behavior, so
+    // a park is accepted only when every open request is a question (not an
+    // approval or a sign-in).
+    if (answered.status === "awaiting-input") {
+      const open = answered.session.pendingInteractions;
+      t.check(
+        open,
+        satisfies(
+          (rows: typeof open) => rows.length > 0 && rows.every((row) => row.request.kind === "question"),
+          "parked only on a follow-up question to the user",
+        ),
+      );
+    } else {
+      answered.succeeded();
+    }
 
     if (judgeAvailable) {
       t.judge(
