@@ -1,5 +1,5 @@
 import { defineEval } from "eve/evals";
-import { LOAD_DEMO } from "./shared.ts";
+import { LOAD_DEMO, finishedOrAskedUser } from "./shared.ts";
 
 export default defineEval({
   description: "Asks which phone column to use instead of choosing one, then applies the answer.",
@@ -14,6 +14,8 @@ export default defineEval({
       input: { source: "current", target: "phone", column: "mobile_phone" },
     });
     second.notCalledTool("record_decision");
-    t.succeeded();
+    // After mapping, the agent may summarize in text or ask whether to start
+    // the review through ask_question; both are correct.
+    finishedOrAskedUser(t, second);
   },
 });
