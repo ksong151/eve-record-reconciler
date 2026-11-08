@@ -10,11 +10,12 @@ uncertain cases in plain language, asks one focused question at a time, records
 your explicit answers, and shows a dry-run preview. It writes output only after
 you approve.
 
-> **Status.** The deterministic pipeline is covered by automated tests. During
-> development the eve tools were also run once in `eve dev` with a temporary
-> scripted stand-in model (not included here). No live model has been tested,
-> neither ChatGPT nor AI Gateway, and the [evals](#evals) have not run against
-> one. See [Test the conversation locally](#test-the-conversation-locally).
+> **Status.** The deterministic pipeline is covered by automated tests. On
+> 2026-11-08, the four [evals](#evals) ran against a live model through a
+> ChatGPT login (eve `1.0.0-rc.6`, judge checks off): `npm run eval -- --repeat 2`
+> passed 8 of 8, every eval 2/2. The AI Gateway route has not been run, and the
+> hand-driven walkthrough in [Test the conversation locally](#test-the-conversation-locally)
+> has not been recorded here.
 
 ## What it does
 
@@ -130,12 +131,15 @@ RECONCILER_EVAL_JUDGE=1 npm run eval -- --strict
 
 `--strict` makes a judge score below 0.7 fail the run.
 
-Status: the evals have not run against a real model. Their wiring was checked
-once with a temporary scripted stand-in model (not included here), with the
-judge off.
-- All 4 passed.
-- A deliberately misbehaving stand-in, which decided before the user answered,
-  failed `decision-needs-answer`.
+Status: on 2026-11-08, with a ChatGPT login and the judge off,
+`npm run eval -- --repeat 2` passed 8 of 8 (every eval 2/2). Earlier live runs
+had failed on turn boundaries, not behavior: the model sometimes ends a turn by
+asking the user through `ask_question`, which parks the run, and the evals
+expected a text reply. `evals/shared.ts` now accepts either ending while the
+behavioral gates stayed the same. The judge-graded checks have not run. Before
+the live runs, the wiring was checked with a temporary scripted stand-in model
+(not included here): all 4 passed, and a deliberately misbehaving stand-in that
+decided before the user answered failed `decision-needs-answer`.
 
 `eve eval` starts its own local server, and it has no
 `--no-default-extensions` option. That server therefore includes eve's
