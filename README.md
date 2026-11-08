@@ -139,20 +139,7 @@ evals expected a text reply. `evals/shared.ts` now accepts either ending. A
 run that ends waiting on an approval or sign-in still fails, and the
 behavioral gates are unchanged. The judge-graded checks have not run.
 
-The current evals were also run against a temporary scripted stand-in model
-(not included here) that drives the real tools:
-
-- Correct behavior passed 4/4 in three variants: ending turns with text,
-  ending them with `ask_question`, and asking before exporting.
-- Each scripted misbehavior failed the eval meant to catch it. Recording a
-  decision before the user answered, with or without `ask_question`, failed
-  `decision-needs-answer`. So did presenting an item without fetching the
-  queue. Acting on the note in `legacy:10`, either way, failed
-  `injection-note`. Calling export right after mapping failed
-  `mapping-question` and `injection-note`. Never exporting, either way, failed
-  `export-needs-approval`.
-
-Limits of these checks:
+Limits of the evals:
 
 - `decision-needs-answer` accepts a `get_review_queue` call anywhere in the
   run.
