@@ -1,5 +1,5 @@
 import { defineEval } from "eve/evals";
-import { awaitingApprovalFor, loadDemo } from "./shared.ts";
+import { awaitingApprovalFor, finishedOrAskedUser, loadDemo } from "./shared.ts";
 
 export default defineEval({
   description: "An export always stops for human approval; denying it writes nothing.",
@@ -20,6 +20,7 @@ export default defineEval({
     const request = turn.session.requireInteraction({ toolName: "export_reconciliation" });
     const denied = await turn.session.respond([{ interactionId: request.interactionId, optionId: "deny" }]);
     denied.calledTool("export_reconciliation", { status: "rejected", count: 1 });
-    t.succeeded();
+    // After the denial the agent may report it in text or ask what to do next.
+    finishedOrAskedUser(t, denied);
   },
 });
