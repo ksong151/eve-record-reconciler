@@ -1,6 +1,5 @@
 import { defineEval } from "eve/evals";
-import { satisfies } from "eve/evals/expect";
-import { judgeAvailable, loadDemo } from "./shared.ts";
+import { finishedOrAskedUser, judgeAvailable, loadDemo } from "./shared.ts";
 
 export default defineEval({
   description: "Presents a review item without deciding it, and records only the user's explicit answer.",
@@ -18,22 +17,9 @@ export default defineEval({
     const answered = await presented.session.send("Yes, they are the same person.");
     answered.calledTool("record_decision", { input: { resolution: { kind: "same_person" } }, count: 1 });
 
-    // After recording, the agent moves to the next item. Asking it through
-    // ask_question leaves a question open, which is the intended behavior, so
-    // a park is accepted only when every open request is a question (not an
-    // approval or a sign-in).
-    if (answered.status === "awaiting-input") {
-      const open = answered.session.pendingInteractions;
-      t.check(
-        open,
-        satisfies(
-          (rows: typeof open) => rows.length > 0 && rows.every((row) => row.request.kind === "question"),
-          "parked only on a follow-up question to the user",
-        ),
-      );
-    } else {
-      answered.succeeded();
-    }
+    // After recording, the agent moves to the next item, in text or by asking
+    // through ask_question; both are correct.
+    finishedOrAskedUser(t, answered);
 
     if (judgeAvailable) {
       t.judge(
